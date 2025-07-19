@@ -12,9 +12,11 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import re
-from src.libs.resume_and_cover_builder import ResumeFacade, ResumeGenerator, StyleManager
-from src.resume_schemas.job_application_profile import JobApplicationProfile
-from src.resume_schemas.resume import Resume
+from documents.resume_facade import ResumeFacade
+from documents.resume_generator import ResumeGenerator
+from documents.style_manager import StyleManager
+from profiles.schema import JobApplicationProfile
+from profiles.profile import Resume
 from src.logging import logger
 from src.utils.chrome_utils import init_browser
 from src.utils.constants import (
@@ -22,9 +24,18 @@ from src.utils.constants import (
     SECRETS_YAML,
     WORK_PREFERENCES_YAML,
 )
+from src.skills_extractor import extract_skills_from_text
+from src.job_scraper.relocate_me_scraper import scrape_jobs as scrape_relocate_me
+from src.job_scraper.eutechjobs_scraper import scrape_jobs as scrape_eutechjobs
+from src.job_scoring import score_job
+from src.excel_reporter import write_jobs_to_excel
 # from ai_hawk.bot_facade import AIHawkBotFacade
 # from ai_hawk.job_manager import AIHawkJobManager
 # from ai_hawk.llm.llm_manager import GPTAnswerer
+from profiles.config import ConfigValidator, FileManager, ConfigError
+from applications.email_sender import EmailSender
+from applications.manual_handler import ManualApplicationHandler
+from applications.logger import get_logger
 
 
 class ConfigError(Exception):
@@ -342,7 +353,11 @@ def create_resume_pdf_job_tailored(parameters: dict, llm_api_key: str):
                 logger.warning("No style selected. Proceeding with default style.")
         questions = [inquirer.Text('job_url', message="Please enter the URL of the job description:")]
         answers = inquirer.prompt(questions)
-        job_url = answers.get('job_url')
+        if not answers or not answers.get('job_url'):
+            logger.error("No job URL provided. Aborting tailored resume generation.")
+            print("No job URL provided. Aborting.")
+            return
+        job_url = answers['job_url']
         resume_generator = ResumeGenerator()
         resume_object = Resume(plain_text_resume)
         driver = init_browser()
@@ -395,14 +410,17 @@ def create_resume_pdf(parameters: dict, llm_api_key: str):
     """
     try:
         logger.info("Generating a CV based on provided parameters.")
+        print("[DEBUG] Starting resume generation...")
 
         # Load the plain text resume
         with open(parameters["uploads"]["plainTextResume"], "r", encoding="utf-8") as file:
             plain_text_resume = file.read()
+        print("[DEBUG] Loaded plain text resume.")
 
         # Initialize StyleManager
         style_manager = StyleManager()
         available_styles = style_manager.get_styles()
+        print(f"[DEBUG] Available styles: {list(available_styles.keys())}")
 
         if not available_styles:
             logger.warning("No styles available. Proceeding without style selection.")
@@ -426,11 +444,14 @@ def create_resume_pdf(parameters: dict, llm_api_key: str):
                         break
             else:
                 logger.warning("No style selected. Proceeding with default style.")
+        print("[DEBUG] Style selection complete.")
 
         # Initialize the Resume Generator
         resume_generator = ResumeGenerator()
         resume_object = Resume(plain_text_resume)
+        print("[DEBUG] Resume object created.")
         driver = init_browser()
+        print("[DEBUG] Selenium driver initialized.")
         resume_generator.set_resume_object(resume_object)
 
         # Create the ResumeFacade
@@ -442,29 +463,26 @@ def create_resume_pdf(parameters: dict, llm_api_key: str):
             output_path=Path("data_folder/output"),
         )
         resume_facade.set_driver(driver)
+        print("[DEBUG] ResumeFacade created and driver set.")
         result_base64 = resume_facade.create_resume_pdf()
-
-        # Decode Base64 to binary data
-        try:
-            pdf_data = base64.b64decode(result_base64)
-        except base64.binascii.Error as e:
-            logger.error("Error decoding Base64: %s", e)
-            raise
-
-        # Define the output directory using `suggested_name`
-        output_dir = Path(parameters["outputFileDirectory"])
+        print("[DEBUG] PDF bytes returned from resume_facade.create_resume_pdf().")
 
         # Write the PDF file
+        output_dir = Path(parameters["outputFileDirectory"])
         output_path = output_dir / "resume_base.pdf"
         try:
+            import base64
             with open(output_path, "wb") as file:
-                file.write(pdf_data)
+                file.write(base64.b64decode(result_base64))
             logger.info(f"Resume saved at: {output_path}")
+            print(f"[DEBUG] Resume saved at: {output_path}")
         except IOError as e:
             logger.error("Error writing file: %s", e)
+            print(f"[DEBUG] Error writing file: {e}")
             raise
     except Exception as e:
         logger.exception(f"An error occurred while creating the CV: {e}")
+        print(f"[DEBUG] Exception occurred: {e}")
         raise
 
         
@@ -477,19 +495,35 @@ def handle_inquiries(selected_actions: List[str], parameters: dict, llm_api_key:
     :param llm_api_key: API key for the language model.
     """
     try:
+        logger = get_logger()
         if selected_actions:
-            if "Generate Resume" == selected_actions:
+            if "Generate Resume" in selected_actions:
                 logger.info("Crafting a standout professional resume...")
                 create_resume_pdf(parameters, llm_api_key)
-                
-            if "Generate Resume Tailored for Job Description" == selected_actions:
+            if "Generate Resume Tailored for Job Description" in selected_actions:
                 logger.info("Customizing your resume to enhance your job application...")
                 create_resume_pdf_job_tailored(parameters, llm_api_key)
-                
-            if "Generate Tailored Cover Letter for Job Description" == selected_actions:
+            if "Generate Tailored Cover Letter for Job Description" in selected_actions:
                 logger.info("Designing a personalized cover letter to enhance your job application...")
                 create_cover_letter(parameters, llm_api_key)
-
+            if "Send Application via Email" in selected_actions:
+                logger.info("Sending application via email...")
+                email_sender = EmailSender()
+                # Example usage: fill in with actual data
+                email_sender.send_email(
+                    to_email=parameters.get("to_email", "example@example.com"),
+                    subject=parameters.get("subject", "Job Application"),
+                    body=parameters.get("body", "Please find my application attached."),
+                    attachments=parameters.get("attachments", [])
+                )
+            if "Manual Application" in selected_actions:
+                logger.info("Saving manual application for later action...")
+                manual_handler = ManualApplicationHandler(parameters["outputFileDirectory"])
+                # Example usage: fill in with actual data
+                manual_handler.save_manual_application(
+                    job_info=parameters.get("job_info", {}),
+                    generated_docs=parameters.get("generated_docs", {})
+                )
         else:
             logger.warning("No actions selected. Nothing to execute.")
     except Exception as e:
@@ -511,6 +545,7 @@ def prompt_user_action() -> str:
                     "Generate Resume",
                     "Generate Resume Tailored for Job Description",
                     "Generate Tailored Cover Letter for Job Description",
+                    "Search and Score Jobs",  # New option
                 ],
             ),
         ]
@@ -522,6 +557,44 @@ def prompt_user_action() -> str:
     except Exception as e:
         print(f"An error occurred: {e}")
         return ""
+
+
+def search_and_score_jobs_workflow():
+    """
+    New workflow: Extract skills, scrape jobs, score, and write Excel summary.
+    """
+    try:
+        # 1. Load resume text
+        resume_path = Path('data_folder/plain_text_resume.yaml')
+        with open(resume_path, 'r', encoding='utf-8') as f:
+            resume_text = f.read()
+        # 2. Extract skills
+        user_skills = extract_skills_from_text(resume_text)
+        print(f"Extracted skills: {sorted(user_skills)}")
+        # 3. Scrape jobs from both sources
+        jobs = []
+        print("Scraping Relocate.me ...")
+        jobs += scrape_relocate_me(SEARCH_KEYWORDS)
+        print(f"Found {len(jobs)} jobs from Relocate.me.")
+        print("Scraping EU Tech Jobs ...")
+        jobs += scrape_eutechjobs(SEARCH_KEYWORDS)
+        print(f"Total jobs found: {len(jobs)}")
+        # 4. Score jobs
+        for job in jobs:
+            score, explanation = score_job(job, user_skills)
+            job['score'] = score
+            job['score_explanation'] = explanation
+            # Stub: generate filenames (to be replaced with actual PDF generation)
+            job['resume_filename'] = f"resume_{job['title'][:20].replace(' ', '_')}.pdf"
+            job['cover_letter_filename'] = f"cover_{job['title'][:20].replace(' ', '_')}.pdf"
+        # 5. Sort jobs by score descending
+        jobs.sort(key=lambda x: x['score'], reverse=True)
+        # 6. Write to Excel
+        excel_path = 'data_folder/output/job_search_results.xlsx'
+        write_jobs_to_excel(jobs, excel_path)
+        print(f"Job search results written to {excel_path}")
+    except Exception as e:
+        print(f"Error in job search workflow: {e}")
 
 
 def main():
@@ -543,7 +616,14 @@ def main():
         selected_actions = prompt_user_action()
 
         # Handle selected actions and execute them
-        handle_inquiries(selected_actions, config, llm_api_key)
+        if selected_actions == "Search and Score Jobs":
+            search_and_score_jobs_workflow()
+        else:
+            # handle_inquiries expects a list, so wrap if needed
+            if isinstance(selected_actions, str):
+                handle_inquiries([selected_actions], config, llm_api_key)
+            else:
+                handle_inquiries(selected_actions, config, llm_api_key)
 
     except ConfigError as ce:
         logger.error(f"Configuration error: {ce}")
@@ -562,4 +642,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # --- SEARCH KEYWORDS for job search workflow ---
+    SEARCH_KEYWORDS = [
+        'Visa sponsorship software engineer',
+        'Remote backend developer',
+        'Relocation assistance',
+        'Java Spring Boot backend',
+    ]
     main()

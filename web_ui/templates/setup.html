@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Setup - Job Application Automation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-cog me-2"></i>Configuration Setup
+        </h2>
+        <p class="text-muted mb-4">Configure your job application automation settings</p>
+    </div>
+</div>
+
+<form id="configForm" onsubmit="saveConfiguration(event)">
+    <!-- API Configuration -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-key me-2"></i>API Configuration
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="openai_api_key" class="form-label">OpenAI API Key *</label>
+                        <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
+                               value="{{ config.get('openai_api_key', '') }}" required
+                               placeholder="sk-...">
+                        <div class="form-text">Required for AI-powered resume and cover letter generation</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show_api_key" 
+                                   onchange="togglePasswordVisibility('openai_api_key', this)">
+                            <label class="form-check-label" for="show_api_key">
+                                Show API Key
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user me-2"></i>Personal Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ config.get('name', '') }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="surname" class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="surname" name="surname" 
+                               value="{{ config.get('surname', '') }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ config.get('email', '') }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               value="{{ config.get('phone', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="linkedin" class="form-label">LinkedIn Profile</label>
+                        <input type="url" class="form-control" id="linkedin" name="linkedin" 
+                               value="{{ config.get('linkedin', '') }}" 
+                               placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="github" class="form-label">GitHub Profile</label>
+                        <input type="url" class="form-control" id="github" name="github" 
+                               value="{{ config.get('github', '') }}" 
+                               placeholder="https://github.com/yourusername">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="summary" class="form-label">Professional Summary</label>
+                        <textarea class="form-control" id="summary" name="summary" rows="4" 
+                                  placeholder="Brief professional summary...">{{ config.get('summary', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Preferences -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-briefcase me-2"></i>Work Preferences
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Work Arrangement</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remote_work" name="remote_work" 
+                                   {{ 'checked' if config.get('remote_work', True) }}>
+                            <label class="form-check-label" for="remote_work">Remote Work</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hybrid_work" name="hybrid_work" 
+                                   {{ 'checked' if config.get('hybrid_work', True) }}>
+                            <label class="form-check-label" for="hybrid_work">Hybrid Work</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="onsite_work" name="onsite_work" 
+                                   {{ 'checked' if config.get('onsite_work', True) }}>
+                            <label class="form-check-label" for="onsite_work">On-site Work</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="positions" class="form-label">Job Positions</label>
+                        <textarea class="form-control" id="positions" name="positions" rows="3" 
+                                  placeholder="Software Engineer, Data Scientist, etc.">{{ config.get('positions', ['Software Engineer'])|join(', ') }}</textarea>
+                        <div class="form-text">Separate multiple positions with commas</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="locations" class="form-label">Preferred Locations</label>
+                        <textarea class="form-control" id="locations" name="locations" rows="3" 
+                                  placeholder="New York, San Francisco, Remote">{{ config.get('locations', ['Remote'])|join(', ') }}</textarea>
+                        <div class="form-text">Separate multiple locations with commas</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="distance" class="form-label">Maximum Distance (km)</label>
+                        <select class="form-select" id="distance" name="distance">
+                            <option value="0" {{ 'selected' if config.get('distance', 100) == 0 }}>0 km</option>
+                            <option value="5" {{ 'selected' if config.get('distance', 100) == 5 }}>5 km</option>
+                            <option value="10" {{ 'selected' if config.get('distance', 100) == 10 }}>10 km</option>
+                            <option value="25" {{ 'selected' if config.get('distance', 100) == 25 }}>25 km</option>
+                            <option value="50" {{ 'selected' if config.get('distance', 100) == 50 }}>50 km</option>
+                            <option value="100" {{ 'selected' if config.get('distance', 100) == 100 }}>100 km</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="apply_once_at_company" name="apply_once_at_company" 
+                                   {{ 'checked' if config.get('apply_once_at_company', True) }}>
+                            <label class="form-check-label" for="apply_once_at_company">
+                                Apply only once per company
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Configuration -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-envelope me-2"></i>Email Configuration
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="email_enabled" name="email_enabled" 
+                                   {{ 'checked' if config.get('email_enabled', False) }}
+                                   onchange="toggleEmailConfig(this)">
+                            <label class="form-check-label" for="email_enabled">
+                                Enable Email Automation
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="email_config" style="display: {{ 'block' if config.get('email_enabled', False) else 'none' }};">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="smtp_server" class="form-label">SMTP Server</label>
+                            <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                                   value="{{ config.get('smtp_server', 'smtp.gmail.com') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="smtp_port" class="form-label">SMTP Port</label>
+                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                   value="{{ config.get('smtp_port', 587) }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email_address" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email_address" name="email_address" 
+                                   value="{{ config.get('email_address', '') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email_password" class="form-label">Email Password</label>
+                            <input type="password" class="form-control" id="email_password" name="email_password" 
+                                   value="{{ config.get('email_password', '') }}">
+                            <div class="form-text">Use app password for Gmail</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-primary" onclick="testEmailConfig()">
+                            <i class="fas fa-envelope me-2"></i>Test Email Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-code me-2"></i>Skills & Languages
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="skills" class="form-label">Technical Skills</label>
+                        <textarea class="form-control" id="skills" name="skills" rows="4" 
+                                  placeholder="Python, JavaScript, React, Node.js, etc.">{{ config.get('skills', [])|join(', ') }}</textarea>
+                        <div class="form-text">Separate skills with commas</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="languages" class="form-label">Languages</label>
+                        <textarea class="form-control" id="languages" name="languages" rows="4" 
+                                  placeholder="English (Native), Spanish (Conversational)">{{ config.get('languages', [])|join(', ') }}</textarea>
+                        <div class="form-text">Include proficiency level</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="interests" class="form-label">Interests</label>
+                        <textarea class="form-control" id="interests" name="interests" rows="2" 
+                                  placeholder="Machine Learning, Open Source, Photography">{{ config.get('interests', [])|join(', ') }}</textarea>
+                        <div class="form-text">Separate interests with commas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Configuration -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">Ready to save your configuration?</h6>
+                    <small class="text-muted">Make sure all required fields are filled correctly</small>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Loading Spinner -->
+<div id="loading-spinner" class="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Saving configuration...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePasswordVisibility(inputId, checkbox) {
+        const input = document.getElementById(inputId);
+        input.type = checkbox.checked ? 'text' : 'password';
+    }
+    
+    function toggleEmailConfig(checkbox) {
+        const emailConfig = document.getElementById('email_config');
+        emailConfig.style.display = checkbox.checked ? 'block' : 'none';
+    }
+    
+    async function testEmailConfig() {
+        const emailData = {
+            smtp_server: document.getElementById('smtp_server').value,
+            smtp_port: document.getElementById('smtp_port').value,
+            email_address: document.getElementById('email_address').value,
+            email_password: document.getElementById('email_password').value
+        };
+        
+        if (!emailData.email_address || !emailData.email_password) {
+            showAlert('Please fill in email address and password to test', 'warning');
+            return;
+        }
+        
+        try {
+            showAlert('Testing email configuration...', 'info');
+            const response = await apiCall('/api/test-email', 'POST', emailData);
+            
+            if (response.success) {
+                showAlert('Email configuration test successful!', 'success');
+            } else {
+                showAlert(`Email test failed: ${response.error}`, 'danger');
+            }
+        } catch (error) {
+            showAlert(`Email test failed: ${error.message}`, 'danger');
+        }
+    }
+    
+    async function saveConfiguration(event) {
+        event.preventDefault();
+        
+        if (!validateForm('configForm')) {
+            showAlert('Please fill in all required fields', 'warning');
+            return;
+        }
+        
+        const formData = new FormData(document.getElementById('configForm'));
+        const configData = {};
+        
+        // Process form data
+        for (let [key, value] of formData.entries()) {
+            if (key === 'positions' || key === 'locations' || key === 'skills' || key === 'languages' || key === 'interests') {
+                configData[key] = value.split(',').map(item => item.trim()).filter(item => item);
+            } else if (key === 'remote_work' || key === 'hybrid_work' || key === 'onsite_work' || 
+                       key === 'apply_once_at_company' || key === 'email_enabled') {
+                configData[key] = true;
+            } else {
+                configData[key] = value;
+            }
+        }
+        
+        // Handle unchecked checkboxes
+        const checkboxes = ['remote_work', 'hybrid_work', 'onsite_work', 'apply_once_at_company', 'email_enabled'];
+        checkboxes.forEach(checkbox => {
+            if (!configData[checkbox]) {
+                configData[checkbox] = false;
+            }
+        });
+        
+        try {
+            showLoading('loading-spinner');
+            const response = await apiCall('/api/save-config', 'POST', configData);
+            
+            if (response.success) {
+                showAlert('Configuration saved successfully!', 'success');
+                
+                // Emit socket event for real-time updates
+                socket.emit('config_updated', {success: true});
+                
+                // Redirect to dashboard after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                showAlert(`Failed to save configuration: ${response.error}`, 'danger');
+            }
+        } catch (error) {
+            showAlert(`Failed to save configuration: ${error.message}`, 'danger');
+        } finally {
+            hideLoading('loading-spinner');
+        }
+    }
+    
+    // Initialize form
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide email config if not enabled
+        const emailEnabled = document.getElementById('email_enabled');
+        toggleEmailConfig(emailEnabled);
+        
+        // Add form validation
+        const form = document.getElementById('configForm');
+        const inputs = form.querySelectorAll('input[required], textarea[required]');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

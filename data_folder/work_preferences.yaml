@@ -1,47 +1,37 @@
-remote: true
-hybrid: true
-onsite: true
-
-experience_level:
-  internship: false
-  entry: true
-  associate: true
-  mid_senior_level: true
-  director: false
-  executive: false
-
-job_types:
-  full_time: true
-  contract: false
-  part_time: false
-  temporary: true
-  internship: false
-  other: false
-  volunteer: true
-
+apply_once_at_company: true
+company_blacklist:
+- wayfair
+- Crossover
 date:
+  24_hours: true
   all_time: false
   month: false
   week: false
-  24_hours: true
-
-positions:
-  - Software engineer
-
-locations:
-  - Germany
-
-apply_once_at_company: true
-
 distance: 100
-
-company_blacklist:
-  - wayfair
-  - Crossover
-
-title_blacklist:
-  - word1
-  - word2
-
+experience_level:
+  associate: true
+  director: false
+  entry: true
+  executive: false
+  internship: false
+  mid_senior_level: true
+hybrid: true
+job_types:
+  contract: true
+  full_time: true
+  internship: false
+  other: false
+  part_time: true
+  temporary: false
+  volunteer: false
 location_blacklist:
-  - Brazil
+- Brazil
+locations:
+- Ireland
+onsite: true
+positions:
+- Java Backend Engineer
+remote: true
+title_blacklist:
+- word1
+- word2

@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Job Application Automation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-robot text-primary me-3"></i>
+                Job Application Automation
+            </h1>
+            <p class="lead">Streamline your job search with AI-powered automation</p>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>Configuration Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-key me-3 text-primary"></i>
+                            <div>
+                                <strong>API Configuration</strong>
+                                <div>
+                                    {% if config_status.secrets_exists %}
+                                        <span class="status-badge status-configured">
+                                            <i class="fas fa-check me-1"></i>Configured
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-not-configured">
+                                            <i class="fas fa-times me-1"></i>Not Configured
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-user me-3 text-primary"></i>
+                            <div>
+                                <strong>Resume Profile</strong>
+                                <div>
+                                    {% if config_status.resume_exists %}
+                                        <span class="status-badge status-configured">
+                                            <i class="fas fa-check me-1"></i>Configured
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-not-configured">
+                                            <i class="fas fa-times me-1"></i>Not Configured
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-briefcase me-3 text-primary"></i>
+                            <div>
+                                <strong>Work Preferences</strong>
+                                <div>
+                                    {% if config_status.config_exists %}
+                                        <span class="status-badge status-configured">
+                                            <i class="fas fa-check me-1"></i>Configured
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-not-configured">
+                                            <i class="fas fa-times me-1"></i>Not Configured
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-folder me-3 text-primary"></i>
+                            <div>
+                                <strong>Output Directory</strong>
+                                <div>
+                                    {% if config_status.output_folder_exists %}
+                                        <span class="status-badge status-configured">
+                                            <i class="fas fa-check me-1"></i>Ready
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-not-configured">
+                                            <i class="fas fa-times me-1"></i>Not Ready
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <strong>Overall Status:</strong>
+                                {% if config_status.get('valid_configuration', False) %}
+                                    <span class="status-badge status-configured ms-2">
+                                        <i class="fas fa-check me-1"></i>Ready to Use
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-not-configured ms-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Setup Required
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if not config_status.get('valid_configuration', False) %}
+                                    <a href="{{ url_for('setup') }}" class="btn btn-primary">
+                                        <i class="fas fa-cog me-2"></i>Complete Setup
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('setup') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-edit me-2"></i>Edit Configuration
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-bolt me-2"></i>Quick Actions
+        </h3>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h5 class="card-title">Generate Resume</h5>
+                <p class="card-text">Create a professional resume or tailor it for specific job descriptions.</p>
+                <a href="{{ url_for('generate') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Resume
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h5 class="card-title">Cover Letter</h5>
+                <p class="card-text">Generate personalized cover letters that match job requirements.</p>
+                <a href="{{ url_for('generate') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Create Cover Letter
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h5 class="card-title">Manual Applications</h5>
+                <p class="card-text">Manage and track your manual job applications efficiently.</p>
+                <a href="{{ url_for('manual') }}" class="btn btn-warning">
+                    <i class="fas fa-list me-2"></i>View Applications
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Overview -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-star me-2"></i>Features
+        </h3>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-brain text-primary me-2"></i>AI-Powered Generation
+                </h5>
+                <p class="card-text">
+                    Leverage advanced AI to create tailored resumes and cover letters that match job descriptions perfectly.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Job-specific customization</li>
+                    <li><i class="fas fa-check text-success me-2"></i>ATS-friendly formatting</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Professional templates</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-line text-success me-2"></i>Job Matching & Scoring
+                </h5>
+                <p class="card-text">
+                    Intelligent job scoring system that matches your skills with job requirements.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Skill-based matching</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Location preferences</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Automated scoring</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-envelope-open text-warning me-2"></i>Email Automation
+                </h5>
+                <p class="card-text">
+                    Automatically send applications with personalized emails and attachments.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>SMTP integration</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Attachment handling</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Template customization</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cog text-info me-2"></i>Easy Configuration
+                </h5>
+                <p class="card-text">
+                    Simple setup process with both web interface and command-line options.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Web-based setup</li>
+                    <li><i class="fas fa-check text-success me-2"></i>CLI interface</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Configuration validation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity (if configured) -->
+{% if config_status.get('valid_configuration', False) %}
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-history me-2"></i>Recent Activity
+        </h3>
+        <div class="card">
+            <div class="card-body">
+                <div id="recent-activity" class="text-center text-muted">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Loading recent activity...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load recent activity if configured
+    {% if config_status.get('valid_configuration', False) %}
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRecentActivity();
+    });
+    
+    async function loadRecentActivity() {
+        try {
+            // Simulate loading recent activity
+            setTimeout(() => {
+                const activityDiv = document.getElementById('recent-activity');
+                activityDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-primary">5</h5>
+                                <small class="text-muted">Resumes Generated</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-success">3</h5>
+                                <small class="text-muted">Cover Letters Created</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-warning">12</h5>
+                                <small class="text-muted">Applications Tracked</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 1000);
+        } catch (error) {
+            console.error('Error loading recent activity:', error);
+            document.getElementById('recent-activity').innerHTML = 
+                '<p class="text-muted">Unable to load recent activity</p>';
+        }
+    }
+    {% endif %}
+    
+    // Real-time configuration status updates
+    socket.on('config_updated', function(data) {
+        if (data.success) {
+            showAlert('Configuration updated successfully!', 'success');
+            // Refresh the page to show updated status
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
+</script>
+{% endblock %} 

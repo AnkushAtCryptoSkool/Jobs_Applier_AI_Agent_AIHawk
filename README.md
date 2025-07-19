@@ -2,6 +2,63 @@
 <div align="center">
 
 
+# AI-Powered Résumé & Job Application Automation Tool
+
+## Modular Architecture Roadmap (In Progress)
+
+```
+project_root/
+│
+├── job_search/         # Fetching/filtering job postings (pluggable sources)
+├── documents/          # Résumé & cover letter generation (AI/OpenAI logic)
+├── applications/       # Application sending, logging, manual apply
+├── profiles/           # User profile/config management
+├── cli/                # CLI entrypoint and scripts
+├── utils/              # Helper functions
+├── tests/              # Unit and integration tests
+│
+├── requirements.txt
+├── dev-requirements.txt
+├── README.md
+└── .env.example
+```
+
+- **PEP8, type hints, docstrings**
+- **Dependency injection** for all external services
+- **Pydantic** for config/profile schema validation
+- **Logging**: log-to-file and log-to-console
+- **Error handling**: try/except with meaningful messages, retries for network
+- **Separation of concerns**: no CLI logic in business modules
+- **Unit tests**: pytest, with mocks for external dependencies
+
+---
+
+## 🚀 Quick Start
+
+The system now offers **two interfaces** for your convenience:
+
+### 🌐 Web UI (Recommended)
+Modern, intuitive web interface with real-time updates:
+```bash
+python launcher.py --web
+```
+
+### 💻 CLI Interface
+Command-line interface for power users:
+```bash
+python launcher.py --cli
+```
+
+### 📋 Interactive Menu
+Choose your preferred interface:
+```bash
+python launcher.py
+```
+
+For detailed instructions, see [USER_GUIDE.md](USER_GUIDE.md).
+
+---
+
 # AIHawk: the first Jobs Applier AI Agent
 
 

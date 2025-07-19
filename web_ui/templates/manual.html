@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Applications - Job Application Automation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-tasks me-2"></i>Manual Applications
+        </h2>
+        <p class="text-muted mb-4">Manage and track your manual job applications</p>
+    </div>
+</div>
+
+<!-- Applications Summary -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h4 id="pending-count" class="text-warning">0</h4>
+                <p class="card-text">Pending Applications</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h4 id="applied-count" class="text-success">0</h4>
+                <p class="card-text">Applied</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                <h4 id="skipped-count" class="text-danger">0</h4>
+                <p class="card-text">Skipped</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-list fa-2x text-info mb-2"></i>
+                <h4 id="total-count" class="text-info">0</h4>
+                <p class="card-text">Total Jobs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Application -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-plus me-2"></i>Add New Application
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="addApplicationForm" onsubmit="addApplication(event)">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="job_title" class="form-label">Job Title *</label>
+                        <input type="text" class="form-control" id="job_title" name="job_title" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="company" class="form-label">Company *</label>
+                        <input type="text" class="form-control" id="company" name="company" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="job_url" class="form-label">Job URL</label>
+                        <input type="url" class="form-control" id="job_url" name="job_url">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="job_description" class="form-label">Job Description</label>
+                        <textarea class="form-control" id="job_description" name="job_description" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="application_deadline" class="form-label">Application Deadline</label>
+                        <input type="date" class="form-control" id="application_deadline" name="application_deadline">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Application
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Applications Filter -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Filter Applications
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="status_filter" class="form-label">Status</label>
+                    <select class="form-select" id="status_filter" onchange="filterApplications()">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="applied">Applied</option>
+                        <option value="skipped">Skipped</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="priority_filter" class="form-label">Priority</label>
+                    <select class="form-select" id="priority_filter" onchange="filterApplications()">
+                        <option value="">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="search_filter" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search_filter" 
+                           placeholder="Search by title, company..." onkeyup="filterApplications()">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="sort_filter" class="form-label">Sort By</label>
+                    <select class="form-select" id="sort_filter" onchange="filterApplications()">
+                        <option value="date_desc">Date Added (Newest)</option>
+                        <option value="date_asc">Date Added (Oldest)</option>
+                        <option value="priority">Priority</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="company">Company</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applications Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Applications
+        </h5>
+        <div>
+            <button class="btn btn-outline-primary btn-sm" onclick="generateDocumentsForSelected()">
+                <i class="fas fa-file-alt me-1"></i>Generate Documents
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="bulkMarkApplied()">
+                <i class="fas fa-check me-1"></i>Mark Applied
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="bulkMarkSkipped()">
+                <i class="fas fa-times me-1"></i>Mark Skipped
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="applications-table">
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                <p>Loading applications...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Details Modal -->
+<div class="modal fade" id="applicationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Application Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="application-details">
+                    <!-- Application details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="generateDocumentsForApplication()">
+                    <i class="fas fa-file-alt me-1"></i>Generate Documents
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select an action for the selected applications:</p>
+                <div id="bulk-actions-content">
+                    <!-- Bulk actions content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="executeBulkAction()">
+                    Execute Action
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let applications = [];
+    let filteredApplications = [];
+    let selectedApplications = [];
+    let currentApplication = null;
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        loadApplications();
+    });
+    
+    async function loadApplications() {
+        try {
+            const response = await apiCall('/api/manual-applications');
+            
+            if (response.success) {
+                applications = response.applications || [];
+                filteredApplications = [...applications];
+                updateSummaryCards();
+                renderApplicationsTable();
+            } else {
+                showAlert('Failed to load applications', 'danger');
+                renderEmptyState();
+            }
+        } catch (error) {
+            console.error('Error loading applications:', error);
+            showAlert('Error loading applications', 'danger');
+            renderEmptyState();
+        }
+    }
+    
+    function updateSummaryCards() {
+        const pending = applications.filter(app => app.status === 'pending').length;
+        const applied = applications.filter(app => app.status === 'applied').length;
+        const skipped = applications.filter(app => app.status === 'skipped').length;
+        const total = applications.length;
+        
+        document.getElementById('pending-count').textContent = pending;
+        document.getElementById('applied-count').textContent = applied;
+        document.getElementById('skipped-count').textContent = skipped;
+        document.getElementById('total-count').textContent = total;
+    }
+    
+    function renderApplicationsTable() {
+        const tableDiv = document.getElementById('applications-table');
+        
+        if (filteredApplications.length === 0) {
+            renderEmptyState();
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th>Job Title</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        filteredApplications.forEach(app => {
+            const priorityClass = {
+                'high': 'text-danger',
+                'medium': 'text-warning',
+                'low': 'text-success'
+            }[app.priority] || 'text-muted';
+            
+            const statusClass = {
+                'pending': 'text-warning',
+                'applied': 'text-success',
+                'skipped': 'text-danger'
+            }[app.status] || 'text-muted';
+            
+            const deadlineText = app.deadline ? new Date(app.deadline).toLocaleDateString() : 'N/A';
+            
+            tableHTML += `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="form-check-input application-checkbox" 
+                               value="${app.id}" onchange="toggleSelectApplication(this)">
+                    </td>
+                    <td>
+                        <strong>${app.title}</strong>
+                        ${app.url ? `<br><small><a href="${app.url}" target="_blank" class="text-muted">View Job</a></small>` : ''}
+                    </td>
+                    <td>${app.company}</td>
+                    <td>${app.location || 'N/A'}</td>
+                    <td><span class="${priorityClass}">${app.priority.charAt(0).toUpperCase() + app.priority.slice(1)}</span></td>
+                    <td><span class="${statusClass}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span></td>
+                    <td>${deadlineText}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewApplication('${app.id}')" 
+                                    data-bs-toggle="tooltip" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="markAsApplied('${app.id}')" 
+                                    data-bs-toggle="tooltip" title="Mark as Applied">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="markAsSkipped('${app.id}')" 
+                                    data-bs-toggle="tooltip" title="Mark as Skipped">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        tableDiv.innerHTML = tableHTML;
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
+    function renderEmptyState() {
+        const tableDiv = document.getElementById('applications-table');
+        tableDiv.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <h5>No applications found</h5>
+                <p>Add your first job application to get started</p>
+            </div>
+        `;
+    }
+    
+    async function addApplication(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(document.getElementById('addApplicationForm'));
+        const applicationData = {
+            title: formData.get('job_title'),
+            company: formData.get('company'),
+            location: formData.get('location'),
+            url: formData.get('job_url'),
+            description: formData.get('job_description'),
+            deadline: formData.get('application_deadline'),
+            priority: formData.get('priority'),
+            status: 'pending'
+        };
+        
+        try {
+            const response = await apiCall('/api/add-manual-application', 'POST', applicationData);
+            
+            if (response.success) {
+                showAlert('Application added successfully!', 'success');
+                document.getElementById('addApplicationForm').reset();
+                loadApplications(); // Reload applications
+            } else {
+                showAlert(`Failed to add application: ${response.error}`, 'danger');
+            }
+        } catch (error) {
+            showAlert(`Error adding application: ${error.message}`, 'danger');
+        }
+    }
+    
+    function filterApplications() {
+        const statusFilter = document.getElementById('status_filter').value;
+        const priorityFilter = document.getElementById('priority_filter').value;
+        const searchFilter = document.getElementById('search_filter').value.toLowerCase();
+        const sortFilter = document.getElementById('sort_filter').value;
+        
+        // Filter applications
+        filteredApplications = applications.filter(app => {
+            const matchesStatus = !statusFilter || app.status === statusFilter;
+            const matchesPriority = !priorityFilter || app.priority === priorityFilter;
+            const matchesSearch = !searchFilter || 
+                app.title.toLowerCase().includes(searchFilter) ||
+                app.company.toLowerCase().includes(searchFilter) ||
+                (app.location && app.location.toLowerCase().includes(searchFilter));
+            
+            return matchesStatus && matchesPriority && matchesSearch;
+        });
+        
+        // Sort applications
+        filteredApplications.sort((a, b) => {
+            switch (sortFilter) {
+                case 'date_asc':
+                    return new Date(a.date_added) - new Date(b.date_added);
+                case 'date_desc':
+                    return new Date(b.date_added) - new Date(a.date_added);
+                case 'priority':
+                    const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                case 'deadline':
+                    if (!a.deadline && !b.deadline) return 0;
+                    if (!a.deadline) return 1;
+                    if (!b.deadline) return -1;
+                    return new Date(a.deadline) - new Date(b.deadline);
+                case 'company':
+                    return a.company.localeCompare(b.company);
+                default:
+                    return 0;
+            }
+        });
+        
+        renderApplicationsTable();
+    }
+    
+    function toggleSelectAll(checkbox) {
+        const applicationCheckboxes = document.querySelectorAll('.application-checkbox');
+        applicationCheckboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+            toggleSelectApplication(cb);
+        });
+    }
+    
+    function toggleSelectApplication(checkbox) {
+        const applicationId = checkbox.value;
+        
+        if (checkbox.checked) {
+            if (!selectedApplications.includes(applicationId)) {
+                selectedApplications.push(applicationId);
+            }
+        } else {
+            selectedApplications = selectedApplications.filter(id => id !== applicationId);
+        }
+    }
+    
+    function viewApplication(applicationId) {
+        const application = applications.find(app => app.id === applicationId);
+        if (!application) return;
+        
+        currentApplication = application;
+        
+        const detailsDiv = document.getElementById('application-details');
+        detailsDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Job Title</h6>
+                    <p>${application.title}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Company</h6>
+                    <p>${application.company}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Location</h6>
+                    <p>${application.location || 'N/A'}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Priority</h6>
+                    <p>${application.priority.charAt(0).toUpperCase() + application.priority.slice(1)}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Status</h6>
+                    <p>${application.status.charAt(0).toUpperCase() + application.status.slice(1)}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Deadline</h6>
+                    <p>${application.deadline ? new Date(application.deadline).toLocaleDateString() : 'N/A'}</p>
+                </div>
+                ${application.url ? `
+                <div class="col-12">
+                    <h6>Job URL</h6>
+                    <p><a href="${application.url}" target="_blank">${application.url}</a></p>
+                </div>
+                ` : ''}
+                ${application.description ? `
+                <div class="col-12">
+                    <h6>Description</h6>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        ${application.description.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        const modal = new bootstrap.Modal(document.getElementById('applicationModal'));
+        modal.show();
+    }
+    
+    async function markAsApplied(applicationId) {
+        await updateApplicationStatus(applicationId, 'applied');
+    }
+    
+    async function markAsSkipped(applicationId) {
+        await updateApplicationStatus(applicationId, 'skipped');
+    }
+    
+    async function updateApplicationStatus(applicationId, status) {
+        try {
+            const response = await apiCall('/api/update-application-status', 'POST', {
+                application_id: applicationId,
+                status: status
+            });
+            
+            if (response.success) {
+                showAlert(`Application marked as ${status}`, 'success');
+                loadApplications(); // Reload applications
+            } else {
+                showAlert(`Failed to update application: ${response.error}`, 'danger');
+            }
+        } catch (error) {
+            showAlert(`Error updating application: ${error.message}`, 'danger');
+        }
+    }
+    
+    function generateDocumentsForSelected() {
+        if (selectedApplications.length === 0) {
+            showAlert('Please select at least one application', 'warning');
+            return;
+        }
+        
+        // Implementation for generating documents for selected applications
+        showAlert('Document generation for selected applications started', 'info');
+    }
+    
+    function generateDocumentsForApplication() {
+        if (!currentApplication) return;
+        
+        // Implementation for generating documents for current application
+        showAlert(`Document generation started for ${currentApplication.title}`, 'info');
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('applicationModal'));
+        modal.hide();
+    }
+    
+    function bulkMarkApplied() {
+        if (selectedApplications.length === 0) {
+            showAlert('Please select at least one application', 'warning');
+            return;
+        }
+        
+        // Implementation for bulk marking as applied
+        showAlert(`Marking ${selectedApplications.length} applications as applied`, 'info');
+    }
+    
+    function bulkMarkSkipped() {
+        if (selectedApplications.length === 0) {
+            showAlert('Please select at least one application', 'warning');
+            return;
+        }
+        
+        // Implementation for bulk marking as skipped
+        showAlert(`Marking ${selectedApplications.length} applications as skipped`, 'info');
+    }
+</script>
+{% endblock %} 
